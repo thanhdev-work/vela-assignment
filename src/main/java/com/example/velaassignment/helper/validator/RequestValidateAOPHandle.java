@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -20,51 +21,52 @@ import org.springframework.validation.FieldError;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Aspect
 @Component
-@PropertySource(
-        value = "classpath:messages/message.properties",
-        encoding = "UTF-8",
-        name = "errorMessage"
-)
+@PropertySource(value = "classpath:messages/message.properties", encoding = "UTF-8", name = "errorMessage")
 public class RequestValidateAOPHandle extends BaseController {
     @Autowired
     private Environment env;
 
-    @Around("execution(* *(..)) && @annotation(validateAnnotation)")
-    public Object validateAnnotation(
-            ProceedingJoinPoint point, ServiceValidate validateAnnotation)
-            throws Throwable {
-        // Get dataRequest
-        BindingResult bindingResult = null;
+    Logger logger = Logger.getLogger(RequestValidateAOPHandle.class.getName());
 
-        //Get BindingResult parameter
-        for (Object arg : point.getArgs()) {
-            if (arg instanceof BindingResult) {
-                bindingResult = (BindingResult) arg;
-            }
-        }
-        if (bindingResult == null) {
-            point.proceed();
-        }
-        org.springframework.core.env.PropertySource<?> errorCodeSource =
-                ((AbstractEnvironment) env).getPropertySources().get("errorMessage");
-        Properties props = new Properties();
-        if (errorCodeSource != null) {
-            props = (Properties) errorCodeSource.getSource();
-        }
-        if (bindingResult.hasErrors()) {
-            List<InvalidProperties> invalidProperties = new ArrayList<>();
-            for (FieldError fieldError : bindingResult.getFieldErrors()) {
-                String message = fieldError.getDefaultMessage();
-                if (NumberUtils.isDigits(message)) {
-                    message = props.getProperty(message);
+    @Around("execution(* *(..)) && @annotation(validateAnnotation)")
+    public Object validateAnnotation(ProceedingJoinPoint point, ServiceValidate validateAnnotation) throws Throwable {
+        // Get dataRequest
+        try {
+            BindingResult bindingResult = null;
+            //Get BindingResult parameter
+            for (Object arg : point.getArgs()) {
+                if (arg instanceof BindingResult) {
+                    bindingResult = (BindingResult) arg;
                 }
-                invalidProperties.add(new InvalidProperties(fieldError.getField(), message));
             }
-            return badReq(invalidProperties);
-        } else {
+            if (bindingResult == null) {
+                logger.log(Level.WARNING, "BindingResult not found in: " + point.getSignature().getName());
+                point.proceed();
+            }
+            org.springframework.core.env.PropertySource<?> errorCodeSource = ((AbstractEnvironment) env).getPropertySources().get("errorMessage");
+            Properties props = new Properties();
+            if (errorCodeSource != null) {
+                props = (Properties) errorCodeSource.getSource();
+            }
+            if (bindingResult.hasErrors()) {
+                List<InvalidProperties> invalidProperties = new ArrayList<>();
+                for (FieldError fieldError : bindingResult.getFieldErrors()) {
+                    String message = fieldError.getDefaultMessage();
+                    if (NumberUtils.isDigits(message)) {
+                        message = props.getProperty(message);
+                    }
+                    invalidProperties.add(new InvalidProperties(fieldError.getField(), message));
+                }
+                return badReq(invalidProperties);
+            } else {
+                return point.proceed();
+            }
+        } catch (Exception e) {
             return point.proceed();
         }
     }
