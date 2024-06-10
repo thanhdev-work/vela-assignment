@@ -5,12 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.cache.annotation.Cacheable;
 
 import javax.persistence.*;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "ORDER")
+@Table(name = "ORDERS")
 @Getter
 @Setter
 @AllArgsConstructor
@@ -18,13 +20,20 @@ import java.time.OffsetDateTime;
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "customer_name")
     private String customerName;
 
+    @Column(name = "address")
+    private String address;
+
     @Column(name = "phone_number")
     private String phoneNumber;
+
+    @Column(name = "email")
+    private String email;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_status")

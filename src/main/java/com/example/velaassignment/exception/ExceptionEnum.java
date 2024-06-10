@@ -5,7 +5,9 @@ import org.omg.CORBA.UNKNOWN;
 public enum ExceptionEnum {
     PRODUCT_NOT_FOUND(40014, "Product not found"),
     PRODUCT_NOT_ITEM_DELETE(40015, "Product not item delete"),
-
+    ORDER_ADD_LIST_PRODUCT_IS_EMPTY(40016, "Order add list product is empty"),
+    ORDER_NOT_FOUND(40017, "Order not found"),
+    PRODUCT_NOT_ENOUGH_QUANTITY(40018, "Product not enough quantity"),
     UNKNOWN(50000, "Unknown");
 
     private final int code;
