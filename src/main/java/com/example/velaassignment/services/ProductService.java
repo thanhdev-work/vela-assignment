@@ -19,4 +19,6 @@ public interface ProductService {
     String deleteProduct(List<Long> id);
 
     List<ProductResponse> getProductByDetail(String detail);
+
+    void updateQuantity(Long id, int quantity);
 }

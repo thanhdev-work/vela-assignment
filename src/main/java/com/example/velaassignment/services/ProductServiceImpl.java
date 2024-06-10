@@ -12,6 +12,7 @@ import com.example.velaassignment.utils.DateTimeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +49,22 @@ public class ProductServiceImpl implements ProductService {
                 .map(e -> new ProductResponse(e.getId(), e.getName(), e.getQuantity(), e.getPrice(), e.getCurrencyEnum(),
                         e.getDetail(), DateTimeUtils.format(e.getCreatedDate()), DateTimeUtils.format(e.getModifiedDate())))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackOn = AppException.class)
+    public void updateQuantity(Long id, int quantity) {
+        Optional<Product> var2 = productRepository.findById(id);
+        if (var2.isPresent()) {
+            Product product = var2.get();
+            int newQuantity = product.getQuantity() - quantity;
+            if (product.getQuantity() == 0 || newQuantity < 0)
+                throw new AppException(ExceptionEnum.PRODUCT_NOT_ENOUGH_QUANTITY);
+            product.setQuantity(newQuantity);
+            productRepository.save(product);
+        } else {
+            throw new AppException(ExceptionEnum.PRODUCT_NOT_FOUND);
+        }
     }
 
     @Override
